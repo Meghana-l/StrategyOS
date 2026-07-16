@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrategyOS — Technology Intelligence Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #0B1C2D;
+    --navy-mid: #152E4A;
+    --navy-light: #1E3A5F;
+    --gold: #C8A84B;
+    --gold-dim: #9A7E38;
+    --gold-bg: #FBF6EC;
+    --bg: #EEF2F7;
+    --surface: #FFFFFF;
+    --border: #D8E2EE;
+    --text: #0B1C2D;
+    --text-sub: #4A5E75;
+    --text-muted: #8A9AB0;
+    --ai: #C8A84B;
+    --cloud: #3B7DD8;
+    --security: #17A589;
+    --emerging: #7D5FBE;
+    --risk-low: #D5F5E3;
+    --risk-low-text: #1E8449;
+    --risk-med: #FEF9E7;
+    --risk-med-text: #B7770D;
+    --risk-high: #FDEDEC;
+    --risk-high-text: #C0392B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 13px; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 200px; min-width: 200px; background: var(--navy); display: flex; flex-direction: column;
+    padding: 0; border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .sidebar-logo {
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-logo .wordmark {
+    font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px;
+  }
+  .sidebar-logo .wordmark span { color: var(--gold); }
+  .sidebar-logo .tagline {
+    font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 1.2px;
+    text-transform: uppercase; margin-top: 3px;
+  }
+  .sidebar-nav { flex: 1; padding: 12px 0; }
+  .nav-section { padding: 16px 20px 6px; font-size: 8.5px; letter-spacing: 1.4px;
+    text-transform: uppercase; color: rgba(255,255,255,0.22); }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 20px;
+    cursor: pointer; color: rgba(255,255,255,0.5); font-size: 12.5px;
+    transition: all 0.15s; border-left: 2px solid transparent; user-select: none;
+  }
+  .nav-item:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: #fff; border-left-color: var(--gold); background: rgba(200,168,75,0.1); }
+  .nav-item .nav-icon { font-size: 13px; width: 16px; text-align: center; }
+  .sidebar-footer {
+    padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 0.5px;
+  }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+    min-height: 56px;
+  }
+  .topbar-title { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .topbar-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;
+  }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #2ECC71; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card-sm { padding: 16px 20px; }
+  .card-label { font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .card-metric { font-size: 28px; font-weight: 700; color: var(--navy); letter-spacing: -0.5px; line-height: 1; }
+  .card-metric-sub { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+  .card-metric .unit { font-size: 16px; font-weight: 500; }
+
+  /* GRID HELPERS */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  /* SECTION TITLES */
+  .section-title { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 14px; letter-spacing: -0.1px; }
+  .section-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
+
+  /* ACCENT BORDER */
+  .accent-border { border-top: 3px solid var(--gold); }
+  .accent-border-ai { border-top: 3px solid var(--ai); }
+  .accent-border-cloud { border-top: 3px solid var(--cloud); }
+  .accent-border-sec { border-top: 3px solid var(--security); }
+  .accent-border-em { border-top: 3px solid var(--emerging); }
+
+  /* SIGNALS */
+  .signal-item {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .signal-item:last-child { border-bottom: none; }
+  .signal-tag {
+    font-size: 8.5px; letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 3px; font-weight: 600; white-space: nowrap; margin-top: 1px;
+  }
+  .signal-tag.trend { background: #EBF5FB; color: #1A5276; }
+  .signal-tag.alert { background: #FEF9E7; color: #7D6608; }
+  .signal-tag.update { background: #EAFAF1; color: #1E8449; }
+  .signal-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .signal-meta { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+  /* RADAR */
+  .radar-wrap { display: flex; gap: 32px; align-items: flex-start; }
+  .radar-svg-wrap { flex: 1; min-width: 0; }
+  .radar-legend { width: 220px; }
+  .legend-cat { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-info .name { font-size: 12px; font-weight: 600; color: var(--navy); }
+  .legend-info .desc { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .radar-ring-legend { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .ring-item { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .ring-bar { height: 3px; width: 28px; border-radius: 2px; }
+  .ring-label { font-size: 11px; color: var(--text-sub); }
+  .radar-tooltip {
+    position: fixed; display: none; background: var(--navy); color: #fff;
+    padding: 10px 13px; border-radius: 6px; font-size: 12px; max-width: 200px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3); pointer-events: none; z-index: 100;
+    border-left: 3px solid var(--gold);
+  }
+  .radar-tooltip .tt-name { font-weight: 700; margin-bottom: 3px; }
+  .radar-tooltip .tt-ring { font-size: 10px; color: rgba(255,255,255,0.5); }
+  .radar-tooltip .tt-note { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 5px; line-height: 1.4; }
+
+  /* INTEL */
+  .heatmap-table { width: 100%; border-collapse: collapse; }
+  .heatmap-table th { font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .heatmap-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .heatmap-table tr:last-child td { border-bottom: none; }
+  .intensity { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+  .int-high { background: #D6EAF8; color: #1A5276; }
+  .int-med { background: #FEF9E7; color: #7D6608; }
+  .int-low { background: #F2F3F4; color: #7F8C8D; }
+
+  /* BRIEF */
+  .brief-form { display: flex; flex-direction: column; gap: 14px; }
+  .brief-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field-label { font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 6px; }
+  .brief-select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; color: var(--text); background: var(--surface); outline: none;
+    appearance: none; cursor: pointer;
+  }
+  .brief-select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,168,75,0.12); }
+  .brief-btn {
+    padding: 11px 28px; background: var(--navy); color: #fff; border: none;
+    border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.1px; align-self: flex-end;
+  }
+  .brief-btn:hover { background: var(--navy-light); }
+  .brief-btn:disabled { background: var(--text-muted); cursor: not-allowed; }
+  .brief-btn.generating { background: var(--gold-dim); }
+  .brief-output {
+    margin-top: 20px; background: #FAFBFC; border: 1px solid var(--border); border-radius: 8px;
+    padding: 24px; min-height: 200px; display: none;
+  }
+  .brief-output.visible { display: block; }
+  .brief-header-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+  .brief-title { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .brief-stamp { font-size: 10px; color: var(--text-muted); }
+  .brief-body { font-size: 12.5px; line-height: 1.75; color: var(--text); }
+  .brief-body .b-header {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--gold-dim); margin-top: 16px; margin-bottom: 6px;
+  }
+  .brief-body p { margin-bottom: 8px; }
+  .brief-body ul { margin: 4px 0 8px 16px; }
+  .brief-body li { margin-bottom: 3px; }
+  .brief-body ol { margin: 4px 0 8px 16px; }
+  .brief-loading {
+    display: flex; align-items: center; gap: 10px; color: var(--text-muted);
+    font-size: 13px; padding: 32px 0;
+  }
+  .spinner {
+    width: 18px; height: 18px; border: 2px solid var(--border);
+    border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* GOVERNANCE */
+  .gov-table { width: 100%; border-collapse: collapse; }
+  .gov-table th {
+    font-size: 9.5px; letter-spacing: 0.9px; text-transform: uppercase;
+    color: var(--text-muted); padding: 10px 14px; text-align: left;
+    border-bottom: 2px solid var(--border); background: #F7F9FC;
+  }
+  .gov-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .gov-table tr:last-child td { border-bottom: none; }
+  .gov-table tr:hover td { background: #F7F9FC; }
+  .gov-table td:first-child { font-weight: 600; color: var(--navy); }
+  .risk-cell { padding: 3px 9px; border-radius: 4px; font-size: 10.5px; font-weight: 600; display: inline-block; }
+  .risk-L { background: var(--risk-low); color: var(--risk-low-text); }
+  .risk-M { background: var(--risk-med); color: var(--risk-med-text); }
+  .risk-H { background: var(--risk-high); color: var(--risk-high-text); }
+  .stance-badge {
+    padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.3px; display: inline-block;
+  }
+  .stance-invest { background: #D5F5E3; color: #1A7A4A; }
+  .stance-monitor { background: #EBF5FB; color: #1A5276; }
+  .stance-pause { background: #FDEDEC; color: #922B21; }
+  .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-bar { height: 5px; border-radius: 3px; background: var(--border); flex: 1; }
+  .score-fill { height: 100%; border-radius: 3px; background: var(--gold); }
+  .score-num { font-size: 11px; font-weight: 700; color: var(--navy); min-width: 28px; }
+
+  svg#radar { width: 100%; height: auto; cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">Strategy<span>OS</span></div>
+    <div class="tagline">Technology Intelligence</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item active" data-tab="overview">
+      <span class="nav-icon">◈</span> Overview
+    </div>
+    <div class="nav-item" data-tab="radar">
+      <span class="nav-icon">◎</span> Tech Radar
+    </div>
+    <div class="nav-item" data-tab="intel">
+      <span class="nav-icon">◱</span> Market Intel
+    </div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" data-tab="brief">
+      <span class="nav-icon">✦</span> Strategy Brief
+    </div>
+    <div class="nav-item" data-tab="governance">
+      <span class="nav-icon">⊞</span> Governance
+    </div>
+  </nav>
+  <div class="sidebar-footer">Enterprise Platform · v1.0 · 2026</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Technology Portfolio Overview</div>
+      <div class="topbar-sub" id="topbar-sub">Global Enterprise · $20B+ Annual Technology Investment</div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div> LIVE · Updated now
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- TAB: OVERVIEW -->
+    <div class="tab-panel active" id="tab-overview">
+      <div class="grid-4">
+        <div class="card card-sm accent-border">
+          <div class="card-label">Total Tech Investment</div>
+          <div class="card-metric"><span class="unit">$</span>20.4<span class="unit">B</span></div>
+          <div class="card-metric-sub">↑ 12% YoY · FY2026</div>
+        </div>
+        <div class="card card-sm accent-border-ai">
+          <div class="card-label">Active AI Initiatives</div>
+          <div class="card-metric">47</div>
+          <div class="card-metric-sub">23 in production · 24 in trial</div>
+        </div>
+        <div class="card card-sm accent-border-sec">
+          <div class="card-label">Avg. Governance Risk</div>
+          <div class="card-metric">3.2<span class="unit">/5</span></div>
+          <div class="card-metric-sub">↓ 0.4 from Q4 2025</div>
+        </div>
+        <div class="card card-sm accent-border-cloud">
+          <div class="card-label">Innovation Index</div>
+          <div class="card-metric">87<span class="unit">/100</span></div>
+          <div class="card-metric-sub">Top quartile · Global FSI</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Technology Portfolio Allocation</div>
+          <div style="position:relative; height:240px">
+            <canvas id="portfolioChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Strategic Intelligence Feed</div>
+          <div class="signal-item">
+            <div>
+              <div class="signal-tag trend">TREND</div>
+            </div>
+            <div>
+              <div class="signal-text">Agentic AI adoption accelerates — 68% of Tier-1 FSIs report active pilots, up from 31% in Q3 2025.</div>
+              <div class="signal-meta">AI & ML · 2h ago</div>
+            </div>
+          </div>
+          <div class="signal-item">
+            <div>
+              <div class="signal-tag alert">ALERT</div>
+            </div>
+            <div>
+              <div class="signal-text">Cloud migration spend up 23% YoY as hybrid infrastructure becomes the standard operating model at global banks.</div>
+              <div class="signal-meta">Cloud & Infra · 4h ago</div>
+            </div>
+          </div>
+          <div class="signal-item">
+            <div>
+              <div class="signal-tag update">UPDATE</div>
+            </div>
+            <div>
+              <div class="signal-text">Quantum cryptography enters Trial phase across 4 institutions — post-quantum encryption pilots underway.</div>
+              <div class="signal-meta">Security · 6h ago</div>
+            </div>
+          </div>
+          <div class="signal-item">
+            <div>
+              <div class="signal-tag trend">TREND</div>
+            </div>
+            <div>
+              <div class="signal-text">Real-time payments volume grew 41% in 2025 — infrastructure investment now a board-level priority.</div>
+              <div class="signal-meta">Emerging & Payments · 8h ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Technology Investment Trajectory (2022–2026)</div>
+        <div style="height:180px">
+          <canvas id="trajectoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: RADAR -->
+    <div class="tab-panel" id="tab-radar">
+      <div class="card" style="margin-bottom:0">
+        <div class="section-title">Technology Radar — Strategic Adoption Framework</div>
+        <div class="section-sub">Hover over a technology to view its strategic context. Click to generate a strategy brief.</div>
+        <div class="radar-wrap">
+          <div class="radar-svg-wrap">
+            <svg id="radar" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+          <div class="radar-legend">
+            <div class="section-title" style="margin-bottom:12px">Technology Categories</div>
+            <div class="legend-cat">
+              <div class="legend-dot" style="background:#C8A84B"></div>
+              <div class="legend-info">
+                <div class="name">AI & Machine Learning</div>
+                <div class="desc">GenAI, Agentic, ML systems</div>
+              </div>
+            </div>
+            <div class="legend-cat">
+              <div class="legend-dot" style="background:#3B7DD8"></div>
+              <div class="legend-info">
+                <div class="name">Cloud & Infrastructure</div>
+                <div class="desc">Cloud-native, multi-cloud, edge</div>
+              </div>
+            </div>
+            <div class="legend-cat">
+              <div class="legend-dot" style="background:#17A589"></div>
+              <div class="legend-info">
+                <div class="name">Security & Compliance</div>
+                <div class="desc">Zero Trust, confidential computing</div>
+              </div>
+            </div>
+            <div class="legend-cat">
+              <div class="legend-dot" style="background:#7D5FBE"></div>
+              <div class="legend-info">
+                <div class="name">Emerging & Payments</div>
+                <div class="desc">RT Payments, tokenization, Web3</div>
+              </div>
+            </div>
+
+            <div class="radar-ring-legend">
+              <div class="section-title" style="margin-bottom:10px">Adoption Rings</div>
+              <div class="ring-item">
+                <div class="ring-bar" style="background:var(--gold)"></div>
+                <div class="ring-label"><strong>Adopt</strong> — Deploy at scale now</div>
+              </div>
+              <div class="ring-item">
+                <div class="ring-bar" style="background:#3B7DD8"></div>
+                <div class="ring-label"><strong>Trial</strong> — Controlled pilots</div>
+              </div>
+              <div class="ring-item">
+                <div class="ring-bar" style="background:var(--border)"></div>
+                <div class="ring-label"><strong>Assess</strong> — Strategic evaluation</div>
+              </div>
+              <div class="ring-item">
+                <div class="ring-bar" style="background:#FDEDEC; border:1px solid #FBBCB8"></div>
+                <div class="ring-label"><strong>Hold</strong> — Monitor only</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MARKET INTEL -->
+    <div class="tab-panel" id="tab-intel">
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-title">Peer Technology Investment Intensity</div>
+          <div class="section-sub">Tech spend as % of total revenue, FY2025</div>
+          <div style="height:220px">
+            <canvas id="peerChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">AI Initiative Growth Rate</div>
+          <div class="section-sub">Year-over-year increase in AI deployments</div>
+          <div style="height:220px">
+            <canvas id="aiGrowthChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Competitive Technology Focus Matrix</div>
+        <div class="section-sub">Investment intensity by technology domain across global peers</div>
+        <table class="heatmap-table">
+          <thead>
+            <tr>
+              <th>Technology Domain</th>
+              <th>Global Leader A</th>
+              <th>Global Leader B</th>
+              <th>Regional Tier-1 C</th>
+              <th>Regional Tier-1 D</th>
+              <th>Challenger E</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Generative AI & LLMs</strong></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>Cloud Infrastructure</strong></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+            </tr>
+            <tr>
+              <td><strong>Cybersecurity</strong></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-low">Low</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+            </tr>
+            <tr>
+              <td><strong>Data & Analytics</strong></td>
+              <td><span class="intensity int-high">High</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>Quantum Technologies</strong></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-low">Low</span></td>
+              <td><span class="intensity int-med">Medium</span></td>
+              <td><span class="intensity int-low">Low</span></td>
+              <td><span class="intensity int-low">Low</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: STRATEGY BRIEF -->
+    <div class="tab-panel" id="tab-brief">
+      <div class="grid-2-1">
+        <div class="card">
+          <div class="section-title">AI Strategy Brief Generator</div>
+          <div class="section-sub">Select a technology area and strategic question to generate an executive-grade strategy brief powered by AI.</div>
+          <div class="brief-form">
+            <div class="brief-row">
+              <div>
+                <div class="field-label">Technology Area</div>
+                <select class="brief-select" id="techArea">
+                  <option value="Generative AI & LLMs in financial services">Generative AI & LLMs</option>
+                  <option value="Agentic AI systems in a regulated financial environment">Agentic AI Systems</option>
+                  <option value="Public Cloud adoption and multi-cloud strategy">Public Cloud Adoption</option>
+                  <option value="Quantum computing and post-quantum cryptography">Quantum Technologies</option>
+                  <option value="Zero Trust cybersecurity architecture">Cybersecurity & Zero Trust</option>
+                  <option value="Enterprise data strategy and governance">Data Strategy & Governance</option>
+                  <option value="Real-time payments infrastructure and instant settlement">Real-Time Payments</option>
+                  <option value="Confidential computing and privacy-preserving technology">Confidential Computing</option>
+                </select>
+              </div>
+              <div>
+                <div class="field-label">Strategic Question</div>
+                <select class="brief-select" id="stratQuestion">
+                  <option value="Investment case and ROI analysis — should we accelerate or consolidate investment?">Investment Case & ROI</option>
+                  <option value="Governance framework — how should we govern adoption in a regulated environment?">Governance Framework</option>
+                  <option value="Competitive positioning — where do we stand vs. global peers and what is the risk of inaction?">Competitive Positioning</option>
+                  <option value="Risk assessment — what are the key risks for a Tier-1 financial institution?">Risk Assessment</option>
+                  <option value="Build vs. Buy vs. Partner — what is the optimal sourcing strategy?">Build vs. Buy vs. Partner</option>
+                  <option value="Implementation roadmap — what is the phased adoption plan for enterprise scale?">Implementation Roadmap</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <button class="brief-btn" id="generateBtn" onclick="generateBrief()">Generate Brief</button>
+            </div>
+          </div>
+
+          <div class="brief-output" id="briefOutput">
+            <div class="brief-header-bar">
+              <div class="brief-title" id="briefTitle"></div>
+              <div class="brief-stamp" id="briefStamp"></div>
+            </div>
+            <div class="brief-body" id="briefBody"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px">
+          <div class="card card-sm" style="background:var(--navy); border-color:var(--navy-mid)">
+            <div class="card-label" style="color:rgba(255,255,255,0.4)">Briefs Generated</div>
+            <div class="card-metric" style="color:#fff; font-size:24px" id="briefCount">0</div>
+            <div class="card-metric-sub" style="color:rgba(255,255,255,0.35)">This session</div>
+          </div>
+          <div class="card">
+            <div class="section-title">How to use</div>
+            <div style="font-size:12px; color:var(--text-sub); line-height:1.6">
+              <p style="margin-bottom:8px">1. Select a <strong>technology area</strong> from the dropdown</p>
+              <p style="margin-bottom:8px">2. Choose a <strong>strategic question</strong> to frame the brief</p>
+              <p style="margin-bottom:8px">3. Click <strong>Generate Brief</strong> for an AI-synthesized executive memo</p>
+              <p>Briefs are formatted for senior leadership presentation.</p>
+            </div>
+          </div>
+          <div class="card" style="background:var(--gold-bg); border-color:rgba(200,168,75,0.3)">
+            <div class="card-label" style="color:var(--gold-dim)">Pro Tip</div>
+            <div style="font-size:12px; color:var(--text-sub); line-height:1.6">
+              Click any technology on the <strong>Tech Radar</strong> to jump directly to a pre-selected brief for that technology.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: GOVERNANCE -->
+    <div class="tab-panel" id="tab-governance">
+      <div class="card" style="margin-bottom:20px">
+        <div class="section-title">Technology Governance & Risk Matrix</div>
+        <div class="section-sub">Strategic risk assessment for enterprise technology adoption in a regulated financial services environment</div>
+        <table class="gov-table">
+          <thead>
+            <tr>
+              <th>Technology</th>
+              <th>Regulatory Risk</th>
+              <th>Impl. Complexity</th>
+              <th>ROI Potential</th>
+              <th>Readiness Score</th>
+              <th>Recommended Stance</th>
+            </tr>
+          </thead>
+          <tbody id="govTableBody"></tbody>
+        </table>
+      </div>
+      <div class="grid-4">
+        <div class="card card-sm" style="text-align:center">
+          <div class="card-label">Invest Mandate</div>
+          <div class="card-metric" style="color:#1A7A4A">3</div>
+          <div class="card-metric-sub">technologies</div>
+        </div>
+        <div class="card card-sm" style="text-align:center">
+          <div class="card-label">Monitor Active</div>
+          <div class="card-metric" style="color:#1A5276">3</div>
+          <div class="card-metric-sub">technologies</div>
+        </div>
+        <div class="card card-sm" style="text-align:center">
+          <div class="card-label">Pause / Hold</div>
+          <div class="card-metric" style="color:#922B21">2</div>
+          <div class="card-metric-sub">technologies</div>
+        </div>
+        <div class="card card-sm" style="text-align:center">
+          <div class="card-label">Avg. Readiness</div>
+          <div class="card-metric">6.3<span class="unit">/10</span></div>
+          <div class="card-metric-sub">across portfolio</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="radar-tooltip" id="radarTooltip">
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-ring" id="tt-ring"></div>
+  <div class="tt-note" id="tt-note"></div>
+</div>
+
+<script>
+// ─── NAV ───
+const tabs = {
+  overview:    { title: 'Technology Portfolio Overview',          sub: 'Global Enterprise · $20B+ Annual Technology Investment' },
+  radar:       { title: 'Technology Radar',                       sub: 'Strategic Adoption Framework · 17 Technologies Tracked' },
+  intel:       { title: 'Market Intelligence',                    sub: 'Competitive Benchmarking · Global Financial Services Peers' },
+  brief:       { title: 'AI Strategy Brief Generator',            sub: 'Executive-Grade Technology Strategy Memos · Powered by AI' },
+  governance:  { title: 'Governance & Risk Matrix',               sub: 'Regulatory Risk Assessment · Enterprise Technology Portfolio' },
+};
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const tab = item.dataset.tab;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('topbar-title').textContent = tabs[tab].title;
+    document.getElementById('topbar-sub').textContent = tabs[tab].sub;
+  });
+});
+
+// ─── CHARTS ───
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+
+// Portfolio donut
+new Chart(document.getElementById('portfolioChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['AI & ML', 'Cloud & Infra', 'Cybersecurity', 'Data & Analytics', 'Quantum & Other'],
+    datasets: [{
+      data: [34, 26, 19, 13, 8],
+      backgroundColor: ['#C8A84B', '#3B7DD8', '#17A589', '#5C85D6', '#7D5FBE'],
+      borderWidth: 2, borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '66%',
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 10, padding: 14, font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
+    }
+  }
+});
+
+// Trajectory line chart
+new Chart(document.getElementById('trajectoryChart'), {
+  type: 'line',
+  data: {
+    labels: ['2022', '2023', '2024', '2025', '2026'],
+    datasets: [
+      { label: 'AI & ML ($B)', data: [4.2, 5.8, 8.1, 11.6, 16.9], borderColor: '#C8A84B', backgroundColor: 'rgba(200,168,75,0.07)', tension: 0.4, borderWidth: 2, pointRadius: 3, fill: true },
+      { label: 'Cloud ($B)', data: [7.1, 8.4, 9.8, 11.1, 12.8], borderColor: '#3B7DD8', backgroundColor: 'rgba(59,125,216,0.06)', tension: 0.4, borderWidth: 2, pointRadius: 3, fill: true },
+      { label: 'Security ($B)', data: [3.2, 3.8, 4.5, 5.4, 6.9], borderColor: '#17A589', backgroundColor: 'rgba(23,165,137,0.06)', tension: 0.4, borderWidth: 2, pointRadius: 3, fill: true },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 16 } } },
+    scales: {
+      y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => '$' + v + 'B' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Peer bar
+new Chart(document.getElementById('peerChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Global Leader A', 'Global Leader B', 'Regional C', 'Regional D', 'Challenger E'],
+    datasets: [{ label: 'Tech Spend (% Revenue)', data: [17.2, 14.8, 13.1, 10.4, 9.7],
+      backgroundColor: ['#0B1C2D','#1E3A5F','#2E5C8A','#4A7BAF','#6A9AC8'], borderRadius: 4 }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => v + '%' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// AI Growth bar
+new Chart(document.getElementById('aiGrowthChart'), {
+  type: 'bar',
+  data: {
+    labels: ['2023', '2024', '2025', '2026 (proj)'],
+    datasets: [{ label: 'AI Initiative Growth (%)', data: [28, 44, 62, 81],
+      backgroundColor: ['rgba(200,168,75,0.5)','rgba(200,168,75,0.65)','rgba(200,168,75,0.8)','#C8A84B'], borderRadius: 4 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => v + '%' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ─── RADAR ───
+const techs = [
+  {x:313,y:224, name:'Generative AI',          cat:'ai',       ring:'ADOPT', note:'Priority deployment — production at scale across enterprise functions'},
+  {x:336,y:313, name:'Cloud-Native Arch',       cat:'cloud',    ring:'ADOPT', note:'Standard operating model — accelerate migration from legacy infra'},
+  {x:243,y:333, name:'Zero Trust',              cat:'security', ring:'ADOPT', note:'Mandatory posture — deploy across all digital perimeters'},
+  {x:230,y:238, name:'Real-Time Payments',      cat:'emerging', ring:'ADOPT', note:'Competitive necessity — real-time rails are table stakes'},
+  {x:329,y:160, name:'Agentic AI',              cat:'ai',       ring:'TRIAL', note:'High-potential pilot — governance framework required before scale'},
+  {x:398,y:225, name:'RAG Systems',             cat:'ai',       ring:'TRIAL', note:'Controlled rollout — strong use cases in knowledge management'},
+  {x:372,y:372, name:'Multi-Cloud',             cat:'cloud',    ring:'TRIAL', note:'Strategic diversification — evaluate vendor lock-in risks'},
+  {x:225,y:398, name:'Confidential Computing',  cat:'security', ring:'TRIAL', note:'Emerging differentiator — evaluate for sensitive data workloads'},
+  {x:167,y:215, name:'Digital Identity',        cat:'emerging', ring:'TRIAL', note:'Pilot in customer-facing workflows — compliance dependencies'},
+  {x:434,y:160, name:'Federated Learning',      cat:'ai',       ring:'ASSESS', note:'Assess for privacy-preserving model training use cases'},
+  {x:405,y:429, name:'Edge Computing',          cat:'cloud',    ring:'ASSESS', note:'Evaluate for latency-critical trading and payments scenarios'},
+  {x:198,y:457, name:'Quantum Cryptography',    cat:'security', ring:'ASSESS', note:'Prepare migration plan — post-quantum standards approaching'},
+  {x:103,y:363, name:'AI Governance Tools',     cat:'security', ring:'ASSESS', note:'Assess tooling landscape — internal capability may be preferred'},
+  {x:103,y:198, name:'Tokenization',            cat:'emerging', ring:'ASSESS', note:'Monitor regulatory developments — significant opportunity if enabled'},
+  {x:400,y:55,  name:'Quantum Computing',       cat:'ai',       ring:'HOLD', note:'5–10 year horizon — monitor research, no production investment'},
+  {x:489,y:426, name:'Spatial Computing',       cat:'cloud',    ring:'HOLD', note:'Nascent for FSI — no near-term enterprise use case identified'},
+  {x:100,y:100, name:'Web3 / DeFi',             cat:'emerging', ring:'HOLD', note:'Regulatory uncertainty remains high — hold pending clarity'},
+];
+const catColors = { ai:'#C8A84B', cloud:'#3B7DD8', security:'#17A589', emerging:'#7D5FBE' };
+const ringColors = { ADOPT:'#C8A84B', TRIAL:'#3B7DD8', ASSESS:'#8A9AB0', HOLD:'#FDEDEC' };
+const cx=280, cy=280, radii=[65,130,195,255];
+
+const svg = document.getElementById('radar');
+const ns = 'http://www.w3.org/2000/svg';
+
+function svgEl(tag, attrs) {
+  const el = document.createElementNS(ns, tag);
+  Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v));
+  return el;
+}
+
+// Background quadrants
+const qColors = ['rgba(200,168,75,0.03)','rgba(59,125,216,0.03)','rgba(23,165,137,0.03)','rgba(125,95,190,0.03)'];
+[[0,-1,1,0],[1,0,0,-1],[-1,0,0,1],[0,1,-1,0]].forEach((q,i) => {
+  // Just use the full circle with consistent background
+});
+
+// Rings
+[255,195,130,65].forEach((r,i) => {
+  const ring = svgEl('circle', { cx, cy, r, fill:'none', stroke:'#D8E2EE', 'stroke-width':'0.8',
+    ...(i===0 ? {'stroke-dasharray':'3,4','stroke-opacity':'0.6'} : {}) });
+  svg.appendChild(ring);
+});
+
+// Quadrant dividers
+[[0,cy-260,0,cy+260],[cx-260,0,cx+260,0]].forEach(([x1,y1,x2,y2]) => {
+  svg.appendChild(svgEl('line', { x1:cx+x1, y1:cy+y1, x2:cx+x2, y2:cy+y2,
+    stroke:'#D8E2EE', 'stroke-width':'0.7', 'stroke-dasharray':'4,5' }));
+});
+
+// Ring labels
+[{r:65,label:'ADOPT'},{r:130,label:'TRIAL'},{r:195,label:'ASSESS'},{r:255,label:'HOLD'}].forEach(({r,label}) => {
+  const t = svgEl('text', { x: cx+5, y: cy-r+11, 'font-size':'7.5', fill:'#8A9AB0',
+    'letter-spacing':'1', 'font-family':'sans-serif', 'font-weight':'600' });
+  t.textContent = label;
+  svg.appendChild(t);
+});
+
+// Quadrant labels
+[{a:45,label:'AI & ML'},{a:135,label:'Cloud & Infra'},{a:225,label:'Security'},{a:315,label:'Emerging'}].forEach(({a,label}) => {
+  const rad = (a-90)*Math.PI/180;
+  const r = 285;
+  const x = cx + r*Math.cos(rad), y = cy + r*Math.sin(rad);
+  const t = svgEl('text', { x, y, 'font-size':'9', fill:'#B0BEC5', 'text-anchor':'middle',
+    'font-family':'sans-serif', 'letter-spacing':'0.5', 'font-weight':'600' });
+  t.textContent = label;
+  svg.appendChild(t);
+});
+
+// Tech dots
+const tooltip = document.getElementById('radarTooltip');
+techs.forEach(tech => {
+  const g = svgEl('g', { style:'cursor:pointer' });
+
+  // Outer glow ring
+  const glow = svgEl('circle', { cx:tech.x, cy:tech.y, r:9, fill:'none',
+    stroke:catColors[tech.cat], 'stroke-width':'0.5', 'stroke-opacity':'0.4' });
+  
+  // Main dot
+  const dot = svgEl('circle', { cx:tech.x, cy:tech.y, r:5.5,
+    fill:catColors[tech.cat], stroke:'#fff', 'stroke-width':'1.5', 'fill-opacity':'0.9' });
+
+  g.appendChild(glow);
+  g.appendChild(dot);
+  svg.appendChild(g);
+
+  g.addEventListener('mouseenter', e => {
+    dot.setAttribute('r', '7');
+    dot.setAttribute('fill-opacity', '1');
+    document.getElementById('tt-name').textContent = tech.name;
+    document.getElementById('tt-ring').textContent = tech.ring + ' · ' + tech.cat.toUpperCase();
+    document.getElementById('tt-note').textContent = tech.note;
+    tooltip.style.display = 'block';
+  });
+  g.addEventListener('mousemove', e => {
+    tooltip.style.left = (e.clientX + 14) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+  });
+  g.addEventListener('mouseleave', () => {
+    dot.setAttribute('r', '5.5');
+    dot.setAttribute('fill-opacity', '0.9');
+    tooltip.style.display = 'none';
+  });
+  g.addEventListener('click', () => {
+    // Switch to brief tab with this tech pre-selected
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="brief"]').classList.add('active');
+    document.getElementById('tab-brief').classList.add('active');
+    document.getElementById('topbar-title').textContent = tabs.brief.title;
+    document.getElementById('topbar-sub').textContent = tabs.brief.sub;
+    // Pre-select closest tech area
+    const sel = document.getElementById('techArea');
+    for (let i=0; i<sel.options.length; i++) {
+      if (sel.options[i].value.toLowerCase().includes(tech.name.split(' ')[0].toLowerCase())) {
+        sel.selectedIndex = i; break;
+      }
+    }
+    tooltip.style.display = 'none';
+  });
+});
+
+// ─── GOVERNANCE TABLE ───
+const govData = [
+  {name:'Generative AI',         reg:'M', complexity:'H', roi:'H', score:7.8, stance:'invest'},
+  {name:'Agentic AI Systems',    reg:'H', complexity:'H', roi:'H', score:6.2, stance:'monitor'},
+  {name:'Cloud-Native Arch',     reg:'L', complexity:'M', roi:'H', score:9.1, stance:'invest'},
+  {name:'Quantum Cryptography',  reg:'M', complexity:'M', roi:'M', score:5.4, stance:'monitor'},
+  {name:'Confidential Computing',reg:'M', complexity:'H', roi:'M', score:6.8, stance:'monitor'},
+  {name:'Federated Learning',    reg:'L', complexity:'M', roi:'M', score:7.2, stance:'invest'},
+  {name:'Quantum Computing',     reg:'H', complexity:'H', roi:'H', score:3.1, stance:'pause'},
+  {name:'Web3 / DeFi',           reg:'H', complexity:'H', roi:'L', score:2.4, stance:'pause'},
+];
+const riskLabel = {L:'Low',M:'Medium',H:'High'};
+const stanceLabel = {invest:'Invest',monitor:'Monitor',pause:'Pause'};
+
+const tbody = document.getElementById('govTableBody');
+govData.forEach(row => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${row.name}</td>
+    <td><span class="risk-cell risk-${row.reg}">${riskLabel[row.reg]}</span></td>
+    <td><span class="risk-cell risk-${row.complexity}">${riskLabel[row.complexity]}</span></td>
+    <td><span class="risk-cell risk-${row.roi === 'H' ? 'L' : row.roi === 'L' ? 'H' : 'M'}">${riskLabel[row.roi]}</span></td>
+    <td>
+      <div class="score-bar-wrap">
+        <div class="score-num">${row.score}</div>
+        <div class="score-bar"><div class="score-fill" style="width:${row.score*10}%"></div></div>
+      </div>
+    </td>
+    <td><span class="stance-badge stance-${row.stance}">${stanceLabel[row.stance]}</span></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// ─── BRIEF GENERATOR ───
+let briefCount = 0;
+
+async function generateBrief() {
+  const techArea = document.getElementById('techArea').value;
+  const question = document.getElementById('stratQuestion').value;
+  const btn = document.getElementById('generateBtn');
+  const output = document.getElementById('briefOutput');
+  const body = document.getElementById('briefBody');
+  const title = document.getElementById('briefTitle');
+  const stamp = document.getElementById('briefStamp');
+
+  btn.disabled = true;
+  btn.textContent = 'Synthesizing...';
+  btn.classList.add('generating');
+  output.classList.add('visible');
+  body.innerHTML = `<div class="brief-loading"><div class="spinner"></div>Synthesizing strategic intelligence…</div>`;
+  title.textContent = '';
+  stamp.textContent = '';
+
+  try {
+    const res = await fetch('/api/strategy', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ techArea, question })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const formatted = formatBrief(data.brief);
+    const techLabel = document.getElementById('techArea').options[document.getElementById('techArea').selectedIndex].text;
+    const qLabel = document.getElementById('stratQuestion').options[document.getElementById('stratQuestion').selectedIndex].text;
+
+    title.textContent = techLabel + ' — ' + qLabel;
+    stamp.textContent = 'Generated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    body.innerHTML = formatted;
+
+    briefCount++;
+    document.getElementById('briefCount').textContent = briefCount;
+  } catch(e) {
+    body.innerHTML = '<p style="color:#C0392B">Failed to generate brief. Please try again.</p>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Generate Brief';
+  btn.classList.remove('generating');
+}
+
+function formatBrief(text) {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '<div class="b-header">$1</div>')
+    .split('\n')
+    .map(line => {
+      if (line.startsWith('<div class="b-header">')) return line;
+      if (line.match(/^[•·]\s/)) return '<li>' + line.slice(2) + '</li>';
+      if (line.match(/^\d+\.\s/)) return '<li>' + line.replace(/^\d+\.\s/, '') + '</li>';
+      if (line.trim() === '') return '';
+      return '<p>' + line + '</p>';
+    })
+    .join('')
+    .replace(/(<li>.*?<\/li>)+/gs, m => '<ul>' + m + '</ul>');
+}
+</script>
+</body>
+</html>
